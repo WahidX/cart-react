@@ -1,5 +1,5 @@
 import React from 'react';
-import CartItem from './CartItem';
+import Cart from './Cart';
 
 function App() {
   return (
@@ -9,7 +9,7 @@ function App() {
         Cart 
       </p></h1>
       
-      <CartItem/>
+      <Cart/>
         
       
     </div>
