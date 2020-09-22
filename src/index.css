@@ -5,27 +5,31 @@ body {
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
-
-.cart-item {
+  }
+  .cart-item {
+    padding: 15px 0px 15px 30px;
     display: inline-flex;
     margin: 20px 10px;
-}
-.cart-item .right-block {
+    border: 1px solid rgb(143, 143, 143);
+    border-radius: 20px;
+    width: auto;
+  }
+  .cart-item .right-block {
     padding: 0 20px;
-}
-.cart-item-actions {
+  }
+  .cart-item-actions {
     margin-top: 20px;
-}
-.action-icons {
+  }
+  .action-icons {
     height: 25px;
     width: 25px;
     margin-right: 10px;
-}
-.action-icons:hover {
+  }
+  .action-icons:hover {
     cursor: pointer;
-}
-.cart{
+  }
+  .cart {
     display: flex;
     flex-direction: column;
-}
+  }
+  
