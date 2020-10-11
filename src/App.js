@@ -1,106 +1,153 @@
 import React from 'react';
 import Cart from './Cart';
 import Navbar from './Navbar';
+import * as firebase from 'firebase';
+import 'firebase/firestore';
 
 class App extends React.Component {
-  constructor(){
-    super();
-    this.state = {
-        products : [
-            {
-                price: 36999,
-                title: 'ROG Phone II',
-                qty: 1,
-                img: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%3Fid%3DOIP.JSLCnWBhng54AMq_XDnNugHaE8%26pid%3DApi&f=1',
-                id: 1
-            },
-            {
-                price: 43000,
-                title: 'Asus r558UQ',
-                qty: 2,
-                img: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic.digit.in%2Fproduct%2F5bb44a9255464fd224b4a9928858cd27ff6aa445.jpeg&f=1&nofb=1',
-                id: 2
-            },
-            {
-                price: 83000,
-                title: 'ROG Zephyrus G14',
-                qty: 1,
-                img: 'https://cdn.mos.cms.futurecdn.net/HLtmgdP2k6ZY5PM4AdjKc9-1200-80.png',
-                id: 3
-            }
-        ]
-    }
-  }
+	constructor(){
+		super();
+		this.state = {
+				products : [],
+				loading : true
+			}
+		this.db = firebase.firestore();
+	}
 
-  handleIncreaseQuantity = (product)=> {
-      const {products} = this.state;
-      const index = products.indexOf(product);
-      products[index].qty++;
 
-      this.setState({
-          products
-      });
-  }
+	componentDidMount(){
+		this.db
+		.collection('products')
+		// .where('price','<=',10000)
+		// .where('title','in',
+		// 	['title1','title2'])
+		// .orderBy('price','desc')
+		.onSnapshot((snapshots)=> {
 
-  handleDecreaseQuantity = (product)=> {
-      const {products} = this.state;
-      const index = products.indexOf(product);
-      if(products[index].qty === 0)
-          return;
+			const products = snapshots.docs.map((doc)=>{
+				const data = doc.data();
+				data['id'] = doc.id;
+				return data;
+			});
 
-      products[index].qty--;
+			this.setState({
+				loading : false,
+				products
+			});
+		});
+	}
 
-      this.setState({
-          products
-      });
-  }
+	handleIncreaseQuantity = (product)=> {
+			const {products} = this.state;
+			const index = products.indexOf(product);
+			
+			const docRef = this.db.collection('products').doc(products[index].id);
 
-  handleDeleteProduct = (product)=> {
-      const {products} = this.state;
-      // const index = products.indexOf(product);
-      
-      this.setState({
-          products: products.filter((item) => item!==product)
-      });
-  }
+			docRef.update({
+				qty : products[index].qty + 1
+			})
+			.then(()=>{
+				console.log("Updated successfully");
+			})
+			.catch((err)=>{
+				console.log("Error: ",err);
+			});
 
-  getCount = () => {
-    const { products } = this.state;
-    let count = 0;
-    products.forEach((product) => {
-      count += product.qty;
-    });
-    return count;
-  }
+	}
 
-  getTotalPrice = () => {
-    const { products } = this.state;
-    let total = 0;
-    products.forEach((product) => {
-      total += product.qty * product.price;
-    });
-    return total;
-  }
-  
-  render() {
-    const { products } = this.state;
+	handleDecreaseQuantity = (product)=> {
+			const {products} = this.state;
+			const index = products.indexOf(product);
 
-    return (
-      <div className="App">
-          
-        <Navbar count={ this.getCount() } />
-        <Cart
-          products = { products }
-          onIncreaseHandle={this.handleIncreaseQuantity}
-          onDecreaseHandle={this.handleDecreaseQuantity}
-          onDeleteHandle={this.handleDeleteProduct}
-        />
-        
-        <div style={ {padding: 30, fontSize: 30 } }>TOTAL: { this.getTotalPrice() } </div>
+			const docRef = this.db.collection('products').doc(products[index].id);
+			if (products[index].qty !== 0){
+				docRef.update({
+					qty : products[index].qty - 1
+				})
+				.then(()=>{
+					console.log("Updated successfully");
+				})
+				.catch((err)=>{
+					console.log("Error: ",err);
+				});
+			}
 
-      </div>
-    );
-  }
+	}
+
+	handleDeleteProduct = (product)=> {
+			const { products } = this.state;
+			const index = products.indexOf(product);
+
+			const docRef = this.db.collection('products').doc(products[index].id);
+
+			docRef
+				.delete()
+				.then(()=>{
+					console.log("Deleted successfully");
+				})
+				.catch((err)=>{
+					console.log("Error: ",err);
+				});
+
+	}
+
+	getCount = () => {
+		const { products } = this.state;
+		let count = 0;
+		products.forEach((product) => {
+			count += product.qty;
+		});
+		return count;
+	}
+
+	getTotalPrice = () => {
+		const { products } = this.state;
+		let total = 0;
+		products.forEach((product) => {
+			total += product.qty * product.price;
+		});
+		return total;
+	}
+
+	addProduct = () => {
+		this.db
+		.collection('products')
+		.add({
+			img:'',
+			title: 'machine',
+			price: 1000,
+			qty: 2
+		})
+		.then((docRef)=>{
+			console.log('Added product: ', docRef);
+		})
+		.catch((err)=>{
+			console.log("Error: ",err);
+		});
+	}
+	
+	render() {
+		const { products, loading } = this.state;
+
+		return (
+			<div className="App">
+					
+				<Navbar count={ this.getCount() } />
+
+				<button onClick={ this.addProduct }>Add Product</button>
+
+				<Cart
+					products = { products }
+					onIncreaseHandle={this.handleIncreaseQuantity}
+					onDecreaseHandle={this.handleDecreaseQuantity}
+					onDeleteHandle={this.handleDeleteProduct}
+				/>
+				{loading && <h1> Loading the products...</h1>}
+				<div style={ {padding: 30, fontSize: 30 } }>TOTAL: { this.getTotalPrice() } </div>
+
+			</div>
+		);
+	}
 }
 
 export default App;
